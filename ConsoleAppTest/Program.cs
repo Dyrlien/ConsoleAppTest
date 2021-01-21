@@ -52,23 +52,27 @@ namespace ConsoleAppTest
             }            
         }
 
-        public void CheckCurrency(string inputName, CurrencyConverter converter, int iteration)
+        public bool CheckCurrency(string inputName, CurrencyConverter converter, int iteration)
         {
+            bool currencyExists = false;
             foreach (Currency aCurrency in CurrenciesList)
             {
-                if (aCurrency.Name == inputName)
+                if (aCurrency.Name.Equals(inputName))
                 {
-                    Console.WriteLine("Selected currency is: " + aCurrency.Name);
+                    Console.WriteLine("Selected currency is: " + aCurrency.Name); 
                     if (iteration == 1)
                     {
-                        converter.FromCurrency = aCurrency;
+                        currencyExists = true;
+                        converter.FromCurrency = aCurrency;                        
                     }
-                    else if (iteration == 2)
+                    else if (iteration == 2 && inputName != converter.FromCurrency.Name)
                     {
-                        converter.ToCurrency = aCurrency;
+                        currencyExists = true;
+                        converter.ToCurrency = aCurrency;                        
                     }
-                }
+                }                             
             }
+            return currencyExists;
         }            
     }
        
@@ -107,21 +111,59 @@ namespace ConsoleAppTest
 
         }
     }
-    
+
+
+    //DU MÅ FÅ MAIN GREIENE INN I METODER SÅ DE KAN KJØRES PÅ NYTT VED FEIL I INPUT
+
+    public class Run
+    {
+        ListCurrencies test = new ListCurrencies();
+        CurrencyConverter converter = new CurrencyConverter();
+        public void Start()
+        {
+            test.AddCurrencies();
+            Console.WriteLine("Welcome to the currency calculator");
+            test.AvailiableCurrencies();
+            From();
+        }
+        public void From()
+        {
+            Console.WriteLine("Which currency are you converting from?");            
+            if(!test.CheckCurrency(Console.ReadLine(), converter, 1))
+            {
+                Console.WriteLine("Invalid currency, please select from the list of currencies");
+                From();
+            }
+            else
+            {
+                To();
+            }
+        }
+        public void To()
+        {
+            Console.WriteLine("Which currency are you converting to?");
+            if (!test.CheckCurrency(Console.ReadLine(), converter, 2))
+            {
+                Console.WriteLine("Invalid currency, please select from the list of currencies");
+                To();
+            }
+            else
+            {
+                Console.WriteLine(converter.FromCurrency);
+                Console.WriteLine(converter.ToCurrency);
+            }
+
+        }
+    }
+
     class Program
-    {                       
+    {        
         static void Main(string[] args)
         {
-            ListCurrencies test = new ListCurrencies();
-            CurrencyConverter test2 = new CurrencyConverter();
-            test.AddCurrencies();
+            Run runprogram = new Run();
+            runprogram.Start();
 
-            Console.WriteLine("Welcome to the currency calculator");
-            
-            test.AvailiableCurrencies();
-            Console.WriteLine("Which currency are you converting from?");
-            test.CheckCurrency(Console.ReadLine(), test2, 1);
-            
+           /* 
             Console.WriteLine("Which currency are you converting to?");
             test.CheckCurrency(Console.ReadLine(), test2, 2);
 
@@ -131,7 +173,7 @@ namespace ConsoleAppTest
             Console.WriteLine(test2.FromCurrency);
             Console.WriteLine(test2.ToCurrency);
             Console.WriteLine(test2.Amount);
-
+           */
             Console.ReadLine();
 
         }
