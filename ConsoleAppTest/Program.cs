@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,7 +37,7 @@ namespace ConsoleAppTest
                
         public void AddCurrencies()
         {
-            http://data.fixer.io/api/latest?access_key=a811a7a4f347a1c280eaf781ed121ccb
+            //http://data.fixer.io/api/latest?access_key=a811a7a4f347a1c280eaf781ed121ccb&symbols = GBP, EUR, USD, NOK;
 
             Currency NOK = new Currency("NOK", 1);
             Currency SEK = new Currency("SEK", 2);
@@ -168,16 +169,58 @@ namespace ConsoleAppTest
             }
         }
     }
+    public class WhatIWant
+    {
+        public string Base;
+        public string Date;
+        public Rates rates { get; set; }
+
+        public override string ToString()
+        {
+            
+            return Base +"    "+ Date +"    " + USD;
+        }
+    }
+    public class Rates
+    {
+        public string ID;
+        public double value;
+    }
+    public class GetCurrencies
+    {
+        public async void LoadCurrencies()
+        {
+            string url = "http://data.fixer.io/api/latest?access_key=a811a7a4f347a1c280eaf781ed121ccb";
+            using (HttpResponseMessage response = await ApiHelper.ApiClient.GetAsync(url))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    WhatIWant GiveIt = await response.Content.ReadAsAsync<WhatIWant>();
+                    Console.WriteLine(GiveIt.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("did not work");
+                }
+            }
+        }
+    }
 
     class Program
     {        
         static void Main(string[] args)
         {
-            Run runprogram = new Run();
-            runprogram.Start();
-          
+
+            //Run runprogram = new Run();
+            //runprogram.Start();
+
+            ApiHelper.InitializeClient();
+            GetCurrencies GetThem = new GetCurrencies();
+            GetThem.LoadCurrencies();
+            
+
             Console.ReadLine();
 
-        }
+        }       
     }
 }
