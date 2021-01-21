@@ -36,6 +36,8 @@ namespace ConsoleAppTest
                
         public void AddCurrencies()
         {
+            http://data.fixer.io/api/latest?access_key=a811a7a4f347a1c280eaf781ed121ccb
+
             Currency NOK = new Currency("NOK", 1);
             Currency SEK = new Currency("SEK", 2);
             Currency USD = new Currency("USD", 3);
@@ -65,6 +67,7 @@ namespace ConsoleAppTest
                         currencyExists = true;
                         converter.FromCurrency = aCurrency;                        
                     }
+                    //Checks if toCurrency is a duplicate of fromCurrency
                     else if (iteration == 2 && inputName != converter.FromCurrency.Name)
                     {
                         currencyExists = true;
@@ -98,22 +101,19 @@ namespace ConsoleAppTest
             get { return amount; }
             set { amount = value; }
         }
-        public void doubleParse(string inputValue)
+        public bool doubleParse(string inputValue)
         {
             if (!double.TryParse(inputValue, out amount))
-            {
-                Console.Error.WriteLine("Invalid input, please try again");
+            {                
+                return false;
             }
             else
-            {
-                Console.WriteLine("Selected amount is " + Amount);
+            {                
+                return true;
             }
 
         }
-    }
-
-
-    //DU MÅ FÅ MAIN GREIENE INN I METODER SÅ DE KAN KJØRES PÅ NYTT VED FEIL I INPUT
+    }    
 
     public class Run
     {
@@ -128,7 +128,7 @@ namespace ConsoleAppTest
         }
         public void From()
         {
-            Console.WriteLine("Which currency are you converting from?");            
+            Console.WriteLine("Input currency code you converting from?");            
             if(!test.CheckCurrency(Console.ReadLine(), converter, 1))
             {
                 Console.WriteLine("Invalid currency, please select from the list of currencies");
@@ -141,18 +141,31 @@ namespace ConsoleAppTest
         }
         public void To()
         {
-            Console.WriteLine("Which currency are you converting to?");
+            Console.WriteLine("Input currency code you converting to?");
             if (!test.CheckCurrency(Console.ReadLine(), converter, 2))
             {
-                Console.WriteLine("Invalid currency, please select from the list of currencies");
+                Console.WriteLine("Invalid currency, please select from the list of currencies. You cannot convert to the same currency as you convert from");
                 To();
             }
             else
             {
+                Amount();
+            }
+        }
+        public void Amount()
+        {
+            Console.WriteLine("What amount are you converting?");
+            if (!converter.doubleParse(Console.ReadLine())){
+                Console.Error.WriteLine("Invalid number, please try again");
+                Amount();
+            }
+            else
+            {
+                Console.WriteLine("Selected amount is " + converter.Amount);
                 Console.WriteLine(converter.FromCurrency);
                 Console.WriteLine(converter.ToCurrency);
+                Console.WriteLine(converter.Amount);
             }
-
         }
     }
 
@@ -162,18 +175,7 @@ namespace ConsoleAppTest
         {
             Run runprogram = new Run();
             runprogram.Start();
-
-           /* 
-            Console.WriteLine("Which currency are you converting to?");
-            test.CheckCurrency(Console.ReadLine(), test2, 2);
-
-            Console.WriteLine("What amount are you converting?");
-            test2.doubleParse(Console.ReadLine());
-
-            Console.WriteLine(test2.FromCurrency);
-            Console.WriteLine(test2.ToCurrency);
-            Console.WriteLine(test2.Amount);
-           */
+          
             Console.ReadLine();
 
         }
