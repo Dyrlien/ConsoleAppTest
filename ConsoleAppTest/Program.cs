@@ -7,108 +7,88 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
 namespace ConsoleAppTest
 {
     public class Currency
     {
-        private string name;
-        private string rate;
-        public Currency(string inputName, string inputRate)
+        public string Name { get; set; }
+        public double Rate { get; set; }
+        public Currency(string inputName, double inputRate)
         {
-            name = inputName;
-            rate = inputRate;
-        }
-        public string Name
-        {
-            get { return name; }
-            set { name = value; }
-        }
-        public string Rate
-        {
-            get { return rate; }
-            set { rate = value; }
-        }
-        public override string ToString()
-        {
-            return Name + "  :  " + Rate;
+            Name = inputName;
+            Rate = inputRate;
         }
     }
 
     public class ListCurrencies
-    {
-        public List<Currency> CurrenciesList = new List<Currency>();
-               
-        /*public void AddCurrencies()
+    {       
+        public static List<JToken> currencies = new List<JToken>();
+        public async Task LoadCurrencies(string date)
         {
-            //http://data.fixer.io/api/latest?access_key=a811a7a4f347a1c280eaf781ed121ccb&symbols = GBP, EUR, USD, NOK;
+            currencies.Clear();
+            HttpClient client = new HttpClient();
 
-            Currency NOK = new Currency("NOK", 1);
-            Currency SEK = new Currency("SEK", 2);
-            Currency USD = new Currency("USD", 3);
-            CurrenciesList.Add(NOK);
-            CurrenciesList.Add(SEK);
-            CurrenciesList.Add(USD);
-        }*/
-        public void AvailiableCurrencies()
+            string url = "http://data.fixer.io/api/"+date+"?access_key=a811a7a4f347a1c280eaf781ed121ccb";
+            var response = await client.GetAsync(string.Format(url));
+
+            string result = await response.Content.ReadAsStringAsync();
+
+            JObject data = JObject.Parse(result);            
+                       
+            foreach (var i in data["rates"])
+            {
+                currencies.Add(i);
+            }                        
+        }
+        public void PrintCurrencies()
         {
-            Console.WriteLine("Current availiable currencies:");
-            foreach (Currency aCurrency in CurrenciesList)
-            {                
-                Console.WriteLine(aCurrency);
+            foreach (var i in currencies.OfType<JProperty>())
+            {
+                Console.WriteLine(i.Name + "  :  " +  i.Value);
             }            
         }
-
+      
         public bool CheckCurrency(string inputName, CurrencyConverter converter, int iteration)
-        {
+        {            
             bool currencyExists = false;
-            foreach (Currency aCurrency in CurrenciesList)
+            double FromDouble;
+            double ToDouble;
+            foreach (var aCurrency in ListCurrencies.currencies.OfType<JProperty>())
             {
                 if (aCurrency.Name.Equals(inputName))
                 {
-                    Console.WriteLine("Selected currency is: " + aCurrency.Name); 
+                    Console.WriteLine("Selected currency is: " + aCurrency.Name);
                     if (iteration == 1)
                     {
+                        FromDouble = double.Parse(aCurrency.Value.ToString());
                         currencyExists = true;
-                        converter.FromCurrency = aCurrency;                        
+                        Currency newCurrency = new Currency(aCurrency.Name, FromDouble);
+                        converter.FromCurrency = newCurrency;
                     }
                     //Checks if toCurrency is a duplicate of fromCurrency
                     else if (iteration == 2 && inputName != converter.FromCurrency.Name)
                     {
+                        ToDouble = double.Parse(aCurrency.Value.ToString());
                         currencyExists = true;
-                        converter.ToCurrency = aCurrency;                        
+                        Currency newCurrency = new Currency(aCurrency.Name, ToDouble);
+                        converter.ToCurrency = newCurrency;
                     }
-                }                             
+                }
             }
             return currencyExists;
-        }            
-    }
-       
-    
+        }
+    }           
     public class CurrencyConverter
     {
-        private Currency fromCurrency;
-        private Currency toCurrency;
-        private double amount;
-
-        public Currency FromCurrency
-        {
-            get { return fromCurrency; }
-            set { fromCurrency = value; }
-        }
-        public Currency ToCurrency
-        {
-            get { return toCurrency; }
-            set { toCurrency = value; }
-        }
-        public double Amount
-        {
-            get { return amount; }
-            set { amount = value; }
-        }
+        public Currency FromCurrency { get; set; }
+        public Currency ToCurrency { get; set; }
+        public double Amount;
+               
         public bool doubleParse(string inputValue)
         {
-            if (!double.TryParse(inputValue, out amount))
+            if (!double.TryParse(inputValue, out Amount))
             {                
                 return false;
             }
@@ -116,25 +96,45 @@ namespace ConsoleAppTest
             {                
                 return true;
             }
-
         }
     }    
-
     public class Run
     {
-        ListCurrencies test = new ListCurrencies();
-        CurrencyConverter converter = new CurrencyConverter();
+        ListCurrencies Check = new ListCurrencies();
+        CurrencyConverter Converter = new CurrencyConverter();
+        private double result;
+        private static string strRegex = @"([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))";
+        Regex Re = new Regex(strRegex);
         public void Start()
-        {
-            //test.AddCurrencies();
-            Console.WriteLine("Welcome to the currency calculator");
-            test.AvailiableCurrencies();
-            From();
+        {                        
+            Console.WriteLine("Select date for exchange rate, format: YYYY-MM-DD \nMake sure it does not preceed 1999-01-01 or exceeds todays date.\nOr press enter for latest exchange rates");            
+            string date = Console.ReadLine();
+            if (date.Equals(""))
+            {
+                date = "latest";
+                Task task = Check.LoadCurrencies(date);
+                Console.WriteLine("Updating currency rates, please wait.");
+                task.Wait();
+                Console.WriteLine("Currencies updated.");
+                From();
+            }
+            else if(Re.IsMatch(date)){
+                Task task = Check.LoadCurrencies(date);
+                Console.WriteLine("Updating currency rates, please wait.");
+                task.Wait();
+                Console.WriteLine("Currencies updated.");
+                From();
+            }
+            else
+            {
+                Console.WriteLine("Invalid date format, format: YYYY-MM-DD");
+                Start();
+            }            
         }
         public void From()
         {
-            Console.WriteLine("Input currency code you converting from?");            
-            if(!test.CheckCurrency(Console.ReadLine(), converter, 1))
+            Console.WriteLine("Input currency code you are converting from. Make sure to write in uppercase");            
+            if(!Check.CheckCurrency(Console.ReadLine(), Converter, 1))
             {
                 Console.WriteLine("Invalid currency, please select from the list of currencies");
                 From();
@@ -146,8 +146,8 @@ namespace ConsoleAppTest
         }
         public void To()
         {
-            Console.WriteLine("Input currency code you converting to?");
-            if (!test.CheckCurrency(Console.ReadLine(), converter, 2))
+            Console.WriteLine("Input currency code you are converting to. Make sure to write in uppercase");
+            if (!Check.CheckCurrency(Console.ReadLine(), Converter, 2))
             {
                 Console.WriteLine("Invalid currency, please select from the list of currencies. You cannot convert to the same currency as you convert from");
                 To();
@@ -160,131 +160,38 @@ namespace ConsoleAppTest
         public void Amount()
         {
             Console.WriteLine("What amount are you converting?");
-            if (!converter.doubleParse(Console.ReadLine())){
+            if (!Converter.doubleParse(Console.ReadLine())){
                 Console.Error.WriteLine("Invalid number, please try again");
                 Amount();
             }
             else
             {
-                Console.WriteLine("Selected amount is " + converter.Amount);
-                Console.WriteLine(converter.FromCurrency);
-                Console.WriteLine(converter.ToCurrency);
-                Console.WriteLine(converter.Amount);
+                Console.WriteLine("Selected amount: " + Converter.Amount + " " + Converter.FromCurrency.Name);
+                Convert();
             }
         }
-    }
-    public class WhatIWant
-    {
-        [JsonConverter(typeof(RateConverter))]
-        public List<Currency> Currencies { get; set; }
-
-        public WhatIWant (List<Currency> testList)
+        public void Convert()
         {
-            this.Currencies = testList;
-        }
-                 
-    }
-
-    public class RateConverter : JsonConverter
-    {
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            writer.WriteStartArray();
-            foreach (var Currency in (List<Currency>)value)
+            result = (Converter.Amount / Converter.FromCurrency.Rate) * Converter.ToCurrency.Rate;
+            Console.WriteLine(Converter.FromCurrency.Name + "  :  " + Converter.Amount);
+            Console.WriteLine(Converter.ToCurrency.Name + "  :  " + result);
+            Console.WriteLine("Press enter to start over, otherwise type QUIT");
+            if (!Console.ReadLine().Equals("QUIT"))
             {
-                writer.WriteRawValue(JsonConvert.SerializeObject(Currency));
+                Start();
             }
-            writer.WriteEndArray();
-        }
-
-        // This is when you're reading the JSON object and converting it to C#
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue,
-            JsonSerializer serializer)
-        {
-            var response = new List<Currency>();
-            // Loading the JSON object
-            JObject rates = JObject.Load(reader);
-            // Looping through all the properties. C# treats it as key value pair
-            foreach (var rate in rates)
+            else
             {
-                // Finally I'm deserializing the value into an actual Player object
-                var p = JsonConvert.DeserializeObject<Currency>(rate.Value.ToString());
-                // Also using the key as the player Id
-                p.Name = rate.Key;
-                response.Add(p);
             }
-            Console.WriteLine(response);
-            return response;
         }
-
-        public override bool CanConvert(Type objectType) => objectType == typeof(List<Currency>);
-    }
-    public class GetCurrencies
-    {
-        public async void LoadCurrencies()
-        {
-            HttpClient client = new HttpClient();
-
-            string url = "http://data.fixer.io/api/latest?access_key=a811a7a4f347a1c280eaf781ed121ccb";
-            var response = await client.GetAsync(string.Format(url));
-
-            string result = await response.Content.ReadAsStringAsync();
-
-            JObject data = JObject.Parse(result);
-
-            Console.WriteLine(data["rates"]["USD"]);
-            /*var test = data.Value<JObject>("rates").Properties();
-
-            var test2 = test.ToDictionary(
-                    k => k.Name,
-                    v => v.Value.ToString()
-            );*/
-
-
-        }
-        /*public async void LoadCurrencies()
-        {
-            string url = "http://data.fixer.io/api/latest?access_key=a811a7a4f347a1c280eaf781ed121ccb";
-            using (HttpResponseMessage response = await ApiHelper.ApiClient.GetAsync(url))
-            {
-                if (response.IsSuccessStatusCode)
-                {
-                    //string GiveIt = await response.Content.ReadAsStringAsync();
-                    
-                    WhatIWant GiveIt = await response.Content.ReadAsAsync<WhatIWant>();
-
-                    //System.Threading.Thread.Sleep(20000);
-
-                    string outString = "";
-                    foreach (Currency aCurrency in GiveIt.Currencies)
-                    {
-                        outString += aCurrency.Name + "  :  " + aCurrency.Rate + "\n";
-                    }
-                    Console.WriteLine(outString);
-                }
-                else
-                {
-                    Console.WriteLine("did not work");
-                }
-            }
-        }*/
-    }
-
+    }   
     class Program
     {        
         static void Main(string[] args)
         {
-
-            //Run runprogram = new Run();
-            //runprogram.Start();
-
-            //ApiHelper.InitializeClient();
-            GetCurrencies GetThem = new GetCurrencies();
-            GetThem.LoadCurrencies();
-            
-
-            Console.ReadLine();
-
+            Run runprogram = new Run();
+            Console.WriteLine("Welcome to the currency calculator");
+            runprogram.Start();                   
         }       
     }
 }
