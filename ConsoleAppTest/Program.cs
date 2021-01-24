@@ -85,8 +85,9 @@ namespace ConsoleAppTest
         public Currency FromCurrency { get; set; }
         public Currency ToCurrency { get; set; }
         public double Amount;
-               
-        public bool doubleParse(string inputValue)
+        private double result;
+
+        public bool DoubleParse(string inputValue)
         {
             if (!double.TryParse(inputValue, out Amount))
             {                
@@ -97,12 +98,17 @@ namespace ConsoleAppTest
                 return true;
             }
         }
+        public void Convert()
+        {
+            result = (Amount / FromCurrency.Rate) * ToCurrency.Rate;
+            Console.WriteLine(FromCurrency.Name + "  :  " + Amount);
+            Console.WriteLine(ToCurrency.Name + "  :  " + result);            
+        }
     }    
     public class Run
     {
         ListCurrencies Check = new ListCurrencies();
-        CurrencyConverter Converter = new CurrencyConverter();
-        private double result;
+        CurrencyConverter Converter = new CurrencyConverter();        
         private static string strRegex = @"([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))";
         Regex Re = new Regex(strRegex);
         public void Start()
@@ -160,7 +166,7 @@ namespace ConsoleAppTest
         public void Amount()
         {
             Console.WriteLine("What amount are you converting?");
-            if (!Converter.doubleParse(Console.ReadLine())){
+            if (!Converter.DoubleParse(Console.ReadLine())){
                 Console.Error.WriteLine("Invalid number, please try again");
                 Amount();
             }
@@ -172,9 +178,7 @@ namespace ConsoleAppTest
         }
         public void Convert()
         {
-            result = (Converter.Amount / Converter.FromCurrency.Rate) * Converter.ToCurrency.Rate;
-            Console.WriteLine(Converter.FromCurrency.Name + "  :  " + Converter.Amount);
-            Console.WriteLine(Converter.ToCurrency.Name + "  :  " + result);
+            Converter.Convert();
             Console.WriteLine("Press enter to start over, otherwise type QUIT");
             if (!Console.ReadLine().Equals("QUIT"))
             {
