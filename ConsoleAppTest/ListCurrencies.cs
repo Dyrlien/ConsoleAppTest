@@ -11,6 +11,9 @@ namespace ConsoleAppTest
     class ListCurrencies
     {
         public static List<JToken> currencies = new List<JToken>();
+        public string CurrentDate;
+
+        //Retrieves currency rates for the selected date and adds them to a list
         public async Task LoadCurrencies(string date)
         {
             currencies.Clear();
@@ -22,12 +25,14 @@ namespace ConsoleAppTest
             string result = await response.Content.ReadAsStringAsync();
 
             JObject data = JObject.Parse(result);
+            CurrentDate = data["date"].ToString();            
 
             foreach (var i in data["rates"])
             {
                 currencies.Add(i);
             }
         }
+        //Prints availiable currencies (NOT IMPLEMENTED)
         public void PrintCurrencies()
         {
             foreach (var i in currencies.OfType<JProperty>())
@@ -35,6 +40,8 @@ namespace ConsoleAppTest
                 Console.WriteLine(i.Name + "  :  " + i.Value);
             }
         }
+
+        //Sjekker om den valgte valutaen finnes i valutalisten.
         public bool CheckCurrency(string inputName, CurrencyConverter converter, int iteration)
         {
             bool currencyExists = false;

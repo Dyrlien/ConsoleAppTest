@@ -13,6 +13,8 @@ namespace ConsoleAppTest
         CurrencyConverter Converter = new CurrencyConverter();
         private static string strRegex = @"([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))";
         Regex Re = new Regex(strRegex);
+
+        //
         public void Start()
         {
             Console.WriteLine("Select date for exchange rate, format: YYYY-MM-DD \nMake sure it does not preceed 1999-01-01 or exceeds todays date.\nOr press enter for latest exchange rates");
@@ -25,7 +27,7 @@ namespace ConsoleAppTest
                 task.Wait();
                 Console.WriteLine("Currencies updated.");
                 From();
-            }
+            }            
             else if (Re.IsMatch(date))
             {
                 Task task = Check.LoadCurrencies(date);
@@ -41,13 +43,14 @@ namespace ConsoleAppTest
             }
         }
         public void From()
-        {
-            Console.WriteLine("Input currency code you are converting from. Make sure to write in uppercase");
+        {            
+            Console.WriteLine("Input currency code to convert from. Make sure to write in uppercase");
+
             if (!Check.CheckCurrency(Console.ReadLine(), Converter, 1))
             {
                 Console.WriteLine("Invalid currency, please select from the list of currencies");
                 From();
-            }
+            }            
             else
             {
                 To();
@@ -55,7 +58,7 @@ namespace ConsoleAppTest
         }
         public void To()
         {
-            Console.WriteLine("Input currency code you are converting to. Make sure to write in uppercase");
+            Console.WriteLine("Input currency code you to convert to. Make sure to write in uppercase");
             if (!Check.CheckCurrency(Console.ReadLine(), Converter, 2))
             {
                 Console.WriteLine("Invalid currency, please select from the list of currencies. You cannot convert to the same currency as you convert from");

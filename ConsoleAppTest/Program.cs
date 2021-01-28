@@ -17,7 +17,8 @@ namespace ConsoleAppTest
         {
             Run runprogram = new Run();
             Console.WriteLine("Welcome to the currency calculator");
-            runprogram.Start();                   
+            runprogram.Start();      
+            
         }       
     }
 }
